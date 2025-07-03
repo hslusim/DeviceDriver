@@ -22,11 +22,12 @@ TEST(TS, TC1) {
 
 	// read 5번 수행해야 해.
 	// EXPECT CALL + TIMES 
-
-	// 사용 후 delete hardware; 필요
 }
 
 TEST(TS, TC2) {
+	MockFlashMemoryDevice mockHW;
+	DeviceDriver dd{ &mockHW };
+
 	// stub
 	// 1회 read 0xDD
 	// 2회 read 0xDD
@@ -35,8 +36,40 @@ TEST(TS, TC2) {
 	// 5회 read 0xDA
 
 	// exception 발생되어야 해
+
+	EXPECT_CALL(mockHW, read((long)0xA))
+		.WillOnce(Return((int)0xDD))
+		.WillOnce(Return((int)0xDD))
+		.WillOnce(Return((int)0xDD))
+		.WillOnce(Return((int)0xDD))
+		.WillOnce(Return((int)0xDA));
+
+	EXPECT_THROW(dd.read(0xA), std::exception);
 }
 
+TEST(TS, TC3_write) {
+	NiceMock<MockFlashMemoryDevice> mockHW;
+	DeviceDriver dd{ &mockHW };
+
+	EXPECT_CALL(mockHW, read((long)0xA))
+		.Times(1)
+		.WillOnce(Return(0xFF));
+
+	dd.write((long)0xA, 0x33);
+}
+
+TEST(TS, TC4_write) {
+	NiceMock<MockFlashMemoryDevice> mockHW;
+	DeviceDriver dd{ &mockHW };
+
+	// read 1번해서 0xFF가 아니면 exception 발생해야해
+	EXPECT_CALL(mockHW, read(0xA))
+		.Times(1)
+		.WillOnce(Return(0xFA));
+
+	EXPECT_THROW(dd.write(0xA, 0x33), std::exception);
+
+}
 
 int main() {
 	::testing::InitGoogleMock();
